@@ -72,6 +72,12 @@ message FieldValidator {
   // uuid_ver specifies the valid UUID versions. Valid values are: 0-5.
   // If uuid_ver is 0 all UUID versions are accepted.
   optional int32 uuid_ver = 18;
+  // Field value of rune length greater than this value.
+  optional int64 rune_gt = 19;
+  // Field value of rune length less than this value.
+  optional int64 rune_lt = 20;
+  // Field value of rune length equal to this value.
+  optional int64 rune_eq = 21;
 }
 
 message OneofValidator {

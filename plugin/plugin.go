@@ -234,6 +234,7 @@ func (p *plugin) generateProto2Message(file *generator.FileDescriptor, message *
 			p.generateFloatValidator(variableName, ccTypeName, fieldName, fieldValidator)
 		} else if field.IsBytes() {
 			p.generateLengthValidator(variableName, ccTypeName, fieldName, fieldValidator)
+			p.generateRuneLengthValidator(variableName, ccTypeName, fieldName, fieldValidator)
 		} else if field.IsMessage() {
 			if repeated && nullable {
 				variableName = "*(item)"
@@ -329,6 +330,7 @@ func (p *plugin) generateProto3Message(file *generator.FileDescriptor, message *
 			p.generateFloatValidator(variableName, ccTypeName, fieldName, fieldValidator)
 		} else if field.IsBytes() {
 			p.generateLengthValidator(variableName, ccTypeName, fieldName, fieldValidator)
+			p.generateRuneLengthValidator(variableName, ccTypeName, fieldName, fieldValidator)
 		} else if field.IsMessage() {
 			if p.validatorWithMessageExists(fieldValidator) {
 				if nullable && !repeated {
@@ -432,6 +434,35 @@ func (p *plugin) generateLengthValidator(variableName string, ccTypeName string,
 		p.P(`if !( len(`, variableName, `) == `, fv.LengthEq, `) {`)
 		p.In()
 		errorStr := fmt.Sprintf(`have a length equal to '%d'`, fv.GetLengthEq())
+		p.generateErrorString(variableName, fieldName, errorStr, fv)
+		p.Out()
+		p.P(`}`)
+	}
+}
+
+func (p *plugin) generateRuneLengthValidator(variableName string, ccTypeName string, fieldName string, fv *validator.FieldValidator) {
+	if fv.RuneGt != nil {
+		p.P(`if !( len([]rune(`, variableName, `)) > `, fv.RuneGt, `) {`)
+		p.In()
+		errorStr := fmt.Sprintf(`have a rune length greater than '%d'`, fv.GetRuneGt())
+		p.generateErrorString(variableName, fieldName, errorStr, fv)
+		p.Out()
+		p.P(`}`)
+	}
+
+	if fv.RuneLt != nil {
+		p.P(`if !( len([]rune(`, variableName, `)) < `, fv.RuneLt, `) {`)
+		p.In()
+		errorStr := fmt.Sprintf(`have a rune length smaller than '%d'`, fv.GetRuneLt())
+		p.generateErrorString(variableName, fieldName, errorStr, fv)
+		p.Out()
+		p.P(`}`)
+	}
+
+	if fv.RuneEq != nil {
+		p.P(`if !( len([]rune(`, variableName, `)) == `, fv.RuneEq, `) {`)
+		p.In()
+		errorStr := fmt.Sprintf(`have a rune length equal to '%d'`, fv.GetRuneEq())
 		p.generateErrorString(variableName, fieldName, errorStr, fv)
 		p.Out()
 		p.P(`}`)
@@ -560,6 +591,7 @@ func (p *plugin) generateStringValidator(variableName string, ccTypeName string,
 		p.P(`}`)
 	}
 	p.generateLengthValidator(variableName, ccTypeName, fieldName, fv)
+	p.generateRuneLengthValidator(variableName, ccTypeName, fieldName, fv)
 }
 
 func (p *plugin) generateRepeatedCountValidator(variableName string, ccTypeName string, fieldName string, fv *validator.FieldValidator) {
