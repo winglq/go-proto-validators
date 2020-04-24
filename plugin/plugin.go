@@ -333,10 +333,14 @@ func (p *plugin) generateProto3Message(file *generator.FileDescriptor, message *
 			p.generateRuneLengthValidator(variableName, ccTypeName, fieldName, fieldValidator)
 		} else if field.IsMessage() {
 			if p.validatorWithMessageExists(fieldValidator) {
+				hmsg := fieldValidator.GetHumanError()
+				if hmsg == "" {
+					hmsg = "message must exist"
+				}
 				if nullable && !repeated {
 					p.P(`if nil == `, variableName, `{`)
 					p.In()
-					p.P(`return `, p.validatorPkg.Use(), `.FieldError("`, fieldName, `",`, p.fmtPkg.Use(), `.Errorf("message must exist"))`)
+					p.P(`return `, p.validatorPkg.Use(), `.FieldError("`, fieldName, `",`, p.fmtPkg.Use(), fmt.Sprintf(`.Errorf("%s"))`, hmsg))
 					p.Out()
 					p.P(`}`)
 				} else if repeated {
